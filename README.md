@@ -15,6 +15,6 @@ In each of the folder I have provided a README to tell something about the conte
 Hope to bring out points that amazed me and were not obvious to me before covering the course in these READMEs.
 
 
-# Usage
+## Usage
 
 You need `jupyter notebook`, `scipy`, `numpy`, `pandas`, `matplotlib` and `nltk` over `python3` to be able to use the notebooks.

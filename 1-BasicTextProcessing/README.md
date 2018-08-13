@@ -1,12 +1,11 @@
-#For TAs:#
+#For TAs:
 Please check the file Assignment-1 for evaluations.
 
-##Assumptions##
+##Assumptions
 * I have removed any word that contained any sort of non aphanumeric charater whil emaking the `clean_tokens`. See the function `rmPunctLowerCase` for details.
 * I made all the words in the corpus lower. I know that to do this I have to make a tradeoff for some Proper nouns to be possibily being used same as a common noun.
-* 
 
-#Else Everyone:#
+#Else Everyone:
 This folder contains some basic text proccessing stuff that has been covered in the first week of our course NLP. Will try to run som e notebooks to get comfy. 
 
 Basic things covered include:

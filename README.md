@@ -2,7 +2,7 @@
 
 `Assignment 1 = 1-BasicTextProcessing`
 
-`Assignment 2 =`
+`Assignment 2 = 2-LanguageModelling`
 
 
 # For Other:

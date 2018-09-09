@@ -1,5 +1,5 @@
-/.ipynb_checkpoints
-/1-BasicTextProcessing/.ipynb_checkpoints
-/2-LanguageModelling/.ipynb_checkpoints
-/1-BasicTextProcessing/_pycache_
-/2-LanguageModelling/_pycache_
+.ipynb_checkpoints/
+1-BasicTextProcessing/.ipynb_checkpoints/
+2-LanguageModelling/.ipynb_checkpoints/
+1-BasicTextProcessing/_pycache_/
+2-LanguageModelling/_pycache_/

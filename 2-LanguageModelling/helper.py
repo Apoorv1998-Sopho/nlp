@@ -67,13 +67,28 @@ def nGramCount(sentences, count = 3):
                 if len(state) > i:
                     state.pop(0)
                 if len(state) == i:
-                    # add ngram to the dictionary.
+                    increaseCount(dic, \
+                            ngram=state) 
+    return dic
 
-def increaseCountDictionary(dic, ngram):
-    try:
-        for word in ngram:
-            if ngram[0] == word:
-                dicr =
-            dic = dic[word]
+'''
+brief: This function tries to increase the
+count of a perticular ngram by recursively
+going deeper into the dictionary.
 
+I use the python paradim of passing arguments
+with reference, therefor this recursion works
+and we are able to get a working funtion.
+'''
+def increaseCount(dic, ngram):
+    if (len(ngram) == 1):
+        try:
+            dic[ngram[0]][0] += 1
+        except KeyError:
+            dic[ngram[0]] = [1,{}]
+
+    else: # recursively go deeper in the dictionary.
+        increaseCount(dic[ngram[0]][1], ngram[1:])
+    
+    return
 

@@ -1,5 +1,7 @@
 import nltk
+import operator as op
 import re
+from functools import reduce
 nltk.download('punkt')
 
 # some perticulat functions
@@ -23,6 +25,7 @@ def getSents(filename):
     line = re.sub(r"\n(\n*)", "\1", raw)
     return sent_tokenize(raw)
 
+
 """
 brief:
 Run a word tokenizer on the sentences generated and 
@@ -40,6 +43,7 @@ def lowerPunct(sentences):
                   list_words if word.isalpha()])
     return r
 
+
 """
 Add start and stop symbols to a given set of
 sentences.
@@ -53,80 +57,66 @@ def addStartStop(sentences):
         r.append(l)
     return r
 
+
 '''
-gives out a dictionary that has a structure
-similar to a trie.
+gives out a dictionary and a number that
+corresponds to the total number of ngrams
+of order n in the text.
 '''
-def nGramCount(sentences, count = 3):
+def nGramCount(sentences, n):
     dic = {}
-    for i in range (1, count + 1):
-        for sentence in sentences:
-            state = []
-            for word in sentence:
-                state.append(word)
-                if len(state) > i:
-                    state.pop(0)
-                if len(state) == i:
-                    increaseCount(dic, \
-                            ngram=state) 
-    return dic
+    counts = 0
+    for sentence in sentences:
+        state = []
+        for word in sentence:
+            state.append(word)
+            if len(state) > n:
+                state.pop(0)
+            if len(state) == n:
+                counts += 1
+                increaseCount(dic, \
+                        ngram=state) 
+    return dic, counts
+
 
 '''
 brief: This function tries to increase the
-count of a perticular ngram by recursively
-going deeper into the dictionary.
-
-I use the python paradim of passing arguments
-with reference, therefor this recursion works
-and we are able to get a working funtion.
+count of a perticular ngram.
 '''
 def increaseCount(dic, ngram):
-    if (len(ngram) == 1):
-        try:
-            dic[ngram[0]][0] += 1
-        except KeyError:
-            dic[ngram[0]] = [1,{}]
-
-    else: # recursively go deeper in the dictionary.
-        increaseCount(dic[ngram[0]][1], ngram[1:])
-    
+    strNgram = " ".join(ngram)
+    try:
+        dic[strNgram] += 1
+    except KeyError:
+        dic[strNgram] = 1 
     return
+
 
 '''
 brief: This function will try find the
 probability of all the ngrams. with the
-given counts.
-
-for example, if we need MLE of W = w1w2
-the probability would be returned as
-dic['w1'][1]['w2'][0] == probability
+given counts, giving out a dictionary.
 '''
-def calculateMLE(nGramCounts, count = 4):
+def MLE(dic, counts):
     r = {}
 
-    # finding the probabs for unigrams
-    sum = 0
-    for key in nGramCounts.keys():
-        sum += nGramCounts[key][0]
-    for key in nGramCounts.keys():
-        r[key] = nGramCounts[key][0]*1./sum
-
-    # finding the probabs of deeper ngrams
-    for key in nGramCounts.keys():
-        calcProbab(nGramCounts, r, key)
+    for key in dic.keys():
+        r[key] = dic[key]/float(counts) 
     return r
 
-def calcProbab(nGramCounts, r, key):
-    tc = dic[key][0]
-    for k in dic[key][1].keys():
-        # finding probab
-        c = dic[key][1][k][0]
-        r[key][1][k][0] = c*1./tc 
-       
-        # going deeper
-        calcProbab[nGramCounts[k][1], r[k][1], k)
-    
-    return
+
+# returns the number of possible ngram counts
+def possible_avail(dic):
+    return nCr(len(dic.keys()), 2), len(dic.keys()) 
+
+
+# calculating combinations            
+def nCr(n, r):
+    r = min(r, n-r)
+    numer = reduce(op.mul, range(n, n-r, -1), 1)
+    denom = reduce(op.mul, range(1, r+1), 1)
+    return numer//denom
+
 
 
 

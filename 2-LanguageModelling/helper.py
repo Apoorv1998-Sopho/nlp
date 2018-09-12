@@ -92,3 +92,46 @@ def increaseCount(dic, ngram):
     
     return
 
+'''
+brief: This function will try find the
+probability of all the ngrams. with the
+given counts.
+
+for example, if we need MLE of W = w1w2
+the probability would be returned as
+dic['w1'][1]['w2'][0] == probability
+'''
+def calculateMLE(nGramCounts, count = 4):
+    r = {}
+
+    # finding the probabs for unigrams
+    sum = 0
+    for key in nGramCounts.keys():
+        sum += nGramCounts[key][0]
+    for key in nGramCounts.keys():
+        r[key] = nGramCounts[key][0]*1./sum
+
+    # finding the probabs of deeper ngrams
+    for key in nGramCounts.keys():
+        calcProbab(nGramCounts, r, key)
+    return r
+
+def calcProbab(nGramCounts, r, key):
+    tc = dic[key][0]
+    for k in dic[key][1].keys():
+        # finding probab
+        c = dic[key][1][k][0]
+        r[key][1][k][0] = c*1./tc 
+       
+        # going deeper
+        calcProbab[nGramCounts[k][1], r[k][1], k)
+    
+    return
+
+
+
+
+
+
+
+

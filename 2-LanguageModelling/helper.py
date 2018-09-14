@@ -3,6 +3,7 @@ import random
 import operator as op
 import re
 from functools import reduce
+import numpy as np
 nltk.download('punkt')
 
 # some perticulat functions
@@ -132,8 +133,8 @@ def Generator(dic, n=1):
 
     # we want fist nGram sampled to have '<s>'
     while True:
-        firstNGram = nextWord(dic, '')
-        if '<s>' in nW:
+        firstNGram = nextWord(dic)
+        if '<s>' in firstNGram: 
             break
 
         else:
@@ -157,13 +158,20 @@ def Generator(dic, n=1):
 '''
 Samples the next Ngram provided the lastngram used.
 '''
-def nextWord(dic, lastWord):
-    keys = [k for k in dic.keys() if (lastWord + ' ' in k)]
-    xk = np.arrange(len(keys))
+def nextWord(dic, lastWord=None):
+    if lastWord == None:
+        keys = dic.keys()
+    
+    else:
+        keys = [k for k in dic.keys() if (lastWord + ' ' in k)]
+            
+    xk = np.arange(len(keys))
     pk = np.array([dic[k] for k in keys])
     pk = tuple(pk/np.sum(pk))
-    custm = stats.rv_discrete(name='custm', values=(xk, pk))
+    custm = rv_discrete(name='custm', values=(xk, pk))
     wordindx = custm.rvs(size=1)
+
+    return keys[wordindx]
 
 
 

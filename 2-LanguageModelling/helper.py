@@ -98,13 +98,24 @@ def increaseCount(dic, ngram):
 '''
 brief: This function will try find the
 probability of all the ngrams. with the
-given counts, giving out a dictionary.
+given smaller dictionary containin the 
+counts, giving out a dictionary.
 '''
-def MLE(dic, counts):
+def MLE(dicB, dicS = None):
+
+    # in the case of unigrams finding the counts
+    if dicS==None:
+        count = 0
+        for v in dicB.vals():
+            count += v
+
     r = {}
 
-    for key in dic.keys():
-        r[key] = dic[key]/float(counts) 
+    for key in dicB.keys():
+        if dicS != None:
+            newKey = ' '.join(key.split()[:-1])
+            count = dicS[newKey]
+        r[key] = dicB[key]/float(count) 
     return r
 
 

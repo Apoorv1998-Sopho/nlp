@@ -1,4 +1,5 @@
 import nltk
+import random
 import operator as op
 import re
 from functools import reduce
@@ -7,6 +8,7 @@ nltk.download('punkt')
 # some perticulat functions
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
+from scipy.stats import rv_discrete
 
 # get tokenized sentences present in "filename"
 def getSents(filename):
@@ -22,7 +24,7 @@ def getSents(filename):
 
     will replace a single \n with a space.
     """
-    line = re.sub(r"\n(\n*)", "\1", raw)
+    line = re.sub(r"\n(\n*)", r"\1", raw)
     return sent_tokenize(raw)
 
 
@@ -116,6 +118,61 @@ def nCr(n, r):
     numer = reduce(op.mul, range(n, n-r, -1), 1)
     denom = reduce(op.mul, range(1, r+1), 1)
     return numer//denom
+
+
+'''
+Generates a sentence with the given MLE
+
+@param: dic the dictionary containg the probabilites
+         of the nGrams
+@param: n which nGram would we like our generator to use
+'''
+def Generator(dic, n=1):
+    sentence = []
+
+    # we want fist nGram sampled to have '<s>'
+    while True:
+        firstNGram = nextWord(dic, '')
+        if '<s>' in nW:
+            break
+
+        else:
+            pass
+
+    # adding the first nGram 
+    sentence = firstNGram.split()
+    lastWord = ' '.join(sentence[1:])
+
+    # iterating untill we sample an nGram ending with </s>
+    while(True):
+        nW = nextWord(dic, lastWord)
+        if '<s>' not in nW:
+            sentence.append(nW.split()[-1])
+            lastWord = ' '.join(sentence[(len(sentence)-n):])
+
+        if '</s>' in nW:
+            return ' '.join(sentence)   
+
+
+'''
+Samples the next Ngram provided the lastngram used.
+'''
+def nextWord(dic, lastWord):
+    keys = [k for k in dic.keys() if (lastWord + ' ' in k)]
+    xk = np.arrange(len(keys))
+    pk = np.array([dic[k] for k in keys])
+    pk = tuple(pk/np.sum(pk))
+    custm = stats.rv_discrete(name='custm', values=(xk, pk))
+    wordindx = custm.rvs(size=1)
+
+
+
+
+
+
+
+
+
 
 
 

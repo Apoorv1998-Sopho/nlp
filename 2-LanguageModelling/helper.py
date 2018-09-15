@@ -79,7 +79,7 @@ def nGramCount(sentences, n):
                 counts += 1
                 increaseCount(dic, \
                         ngram=state) 
-    return dic, counts
+    return dic
 
 
 '''
@@ -106,7 +106,7 @@ def MLE(dicB, dicS = None):
     # in the case of unigrams finding the counts
     if dicS==None:
         count = 0
-        for v in dicB.vals():
+        for v in dicB.values():
             count += v
 
     r = {}
@@ -139,7 +139,7 @@ Generates a sentence with the given MLE
          of the nGrams
 @param: n which nGram would we like our generator to use
 '''
-def Generator(dic, n=1):
+def Generator(dic):
     sentence = []
 
     # we want fist nGram sampled to have '<s>'
@@ -155,6 +155,9 @@ def Generator(dic, n=1):
     sentence = firstNGram.split()
     lastWord = ' '.join(sentence[1:])
 
+    # finding which ngram we are working with
+    n = len(firstNGram.split())
+
     # iterating untill we sample an nGram ending with </s>
     while(True):
         nW = nextWord(dic, lastWord)
@@ -163,6 +166,8 @@ def Generator(dic, n=1):
             lastWord = ' '.join(sentence[(len(sentence)-n):])
 
         if '</s>' in nW:
+            if sentence[-1] != '</s>':
+                sentence.append(nW.split()[-1])
             return ' '.join(sentence)   
 
 
@@ -171,18 +176,26 @@ Samples the next Ngram provided the lastngram used.
 '''
 def nextWord(dic, lastWord=None):
     if lastWord == None:
-        keys = dic.keys()
+        keys = list(dic.keys())
     
     else:
         keys = [k for k in dic.keys() if (lastWord + ' ' in k)]
-            
-    xk = np.arange(len(keys))
-    pk = np.array([dic[k] for k in keys])
-    pk = tuple(pk/np.sum(pk))
-    custm = rv_discrete(name='custm', values=(xk, pk))
-    wordindx = custm.rvs(size=1)
 
-    return keys[wordindx]
+    #getting probabilities sane
+    pk = np.array([dic[k] for k in keys])
+    pk = pk/np.sum(pk)
+    
+    '''
+    checking if there are any possible bigrams, 
+    if not returning '<s>'
+    '''
+    if len(keys) == 0:
+        return '</s>'
+    
+    # sampling with replacement
+    word = np.random.choice(keys, 1,\
+           replace=True, p=pk)
+    return word[0]
 
 
 

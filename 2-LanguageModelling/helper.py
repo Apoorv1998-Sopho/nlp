@@ -139,12 +139,12 @@ Generates a sentence with the given MLE
          of the nGrams
 @param: n which nGram would we like our generator to use
 '''
-def Generator(dic):
+def Generator(mle):
     sentence = []
 
     # we want fist nGram sampled to have '<s>'
     while True:
-        firstNGram = nextWord(dic)
+        firstNGram = nextWord(mle)
         if '<s>' in firstNGram: 
             break
 
@@ -158,12 +158,13 @@ def Generator(dic):
     # finding which ngram we are working with
     n = len(firstNGram.split())
 
-    # iterating untill we sample an nGram ending with </s>
+    # iterating untill we sample an nGram with </s>
     while(True):
-        nW = nextWord(dic, lastWord)
+        nW = nextWord(mle, lastWord)
         if '<s>' not in nW:
             sentence.append(nW.split()[-1])
-            lastWord = ' '.join(sentence[(len(sentence)-n):])
+            lastWord = ' '.join(\
+                       sentence[(len(sentence)-n):])
 
         if '</s>' in nW:
             if sentence[-1] != '</s>':
@@ -174,15 +175,16 @@ def Generator(dic):
 '''
 Samples the next Ngram provided the lastngram used.
 '''
-def nextWord(dic, lastWord=None):
+def nextWord(mle, lastWord=None):
     if lastWord == None:
-        keys = list(dic.keys())
+        keys = list(mle.keys())
     
     else:
-        keys = [k for k in dic.keys() if (lastWord + ' ' in k)]
+        keys = [k for k in mle.keys() \
+                if (lastWord + ' ' in k)]
 
     #getting probabilities sane
-    pk = np.array([dic[k] for k in keys])
+    pk = np.array([mle[k] for k in keys])
     pk = pk/np.sum(pk)
     
     '''
@@ -197,8 +199,82 @@ def nextWord(dic, lastWord=None):
            replace=True, p=pk)
     return word[0]
 
+#################################################### 4b
 
 
+
+
+#################################################### 4b
+'''
+brief: add one smoothing specifically 
+        for bigrams
+@param: dicB, the bigger dictionary 
+         containing bigrams probabilities
+@param: dicS, the smaller dictionary 
+         containing unigrams probabilities
+'''
+def add1(dicB, dicS):
+    r = {}
+    for S1 in dicS.keys():
+        for S2 in dicS.keys():
+            bigKey = S1+' '+S2
+            try:
+                r[bigKey] = dicB[bigKey] + 1
+            except KeyError:
+                r[bigKey] = 1
+    return r
+
+
+'''
+brief: Returns a good turing smoothed 
+        dictionary of the bigram counts
+@param: dicB, the bigger dictionary 
+         containing bigrams counts
+@param: dicS, the smaller dictionary 
+         containing unigrams counts
+
+'''
+def goodTuring(dicB, dicS):
+    FreqN = freqBuckets(dicB)
+    t_counts = totalCounts(dicB)
+
+
+    # getting the number of unseen bigrams i.e. N_0
+    t_bigrams, seen_bigrams = possible_avail(dicS)
+    unseen_bigrams = t_bigrams - seen_bigrams
+    FreqN[0] = unseen_bigrams
+
+    # calculate the new counts for top 10
+    newCountsTop10 = {}
+    for n in range(10):
+        newCountsTop10[n] = (FreqN[n+1]*(n+1)/float(FreqN[n]))
+    return newCountsTop10
+
+
+'''
+Getting freq buckets.
+'''
+def freqBuckets(dic):
+    FreqN = {}
+    for key in dic.keys():
+        freq = dic[key]
+        try:
+            FreqN[freq] += 1
+
+        except KeyError:
+            FreqN[freq] = 1
+    FreqN[0]=0
+    return FreqN
+
+
+'''
+Total number of bigrams
+'''
+def totalCounts(dic):
+    t_counts = 0
+    for key in dic.keys():
+        t_counts += dic[key]
+    return t_counts
 
 
 

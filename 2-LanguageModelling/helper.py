@@ -62,9 +62,7 @@ def addStartStop(sentences):
 
 
 '''
-gives out a dictionary and a number that
-corresponds to the total number of ngrams
-of order n in the text.
+returns n-gram histogram
 '''
 def nGramCount(sentences, n):
     dic = {}
@@ -205,50 +203,77 @@ def nextWord(mle, lastWord=None):
 
 
 #################################################### 4b
-'''
-brief: add one smoothing specifically 
-        for bigrams
-@param: dicB, the bigger dictionary 
-         containing bigrams probabilities
-@param: dicS, the smaller dictionary 
-         containing unigrams probabilities
-'''
-def add1(dicB, dicS):
-    r = {}
-    for S1 in dicS.keys():
-        for S2 in dicS.keys():
-            bigKey = S1+' '+S2
-            try:
-                r[bigKey] = dicB[bigKey] + 1
-            except KeyError:
-                r[bigKey] = 1
-    return r
 
 
+'''
+Total number of bigrams
+'''
+def totalTokens(dic):
+    t_counts = 0
+    for key in dic.keys():
+        t_counts += dic[key]
+    return t_counts
+
+
+'''
+brief: Class for finding the new
+updated counts after add1smoothing
+@param: dicB, bigrams histogram
+@param: dicS, unigrams histogram
+'''
+class Add1Smooth(object):
+    def __init__(self, dicB, dicS):
+        self.dicB = dicB
+        self.dicS = dicS
+
+    # returns the updated count
+    def NewCount(self, bs):
+        try:
+            num = self.dicB[bs] + 1
+        except KeyError:
+            num = 1
+        den = totalTokens(self.dicB) + len(self.dicB)
+
+        # returns (C+1)*N/(N+V) that is new count
+        return (len(self.dicB) * num)/float(den)
+
+        
 '''
 brief: Returns a good turing smoothed 
-        dictionary of the bigram counts
-@param: dicB, the bigger dictionary 
-         containing bigrams counts
-@param: dicS, the smaller dictionary 
-         containing unigrams counts
-
+        bigrams histogram
+@param: dicB, bigrams histogram
+@param: dicS, unigram histogram
 '''
-def goodTuring(dicB, dicS):
-    FreqN = freqBuckets(dicB)
-    t_counts = totalCounts(dicB)
+class GoodTuring(object):
+    def __init__(self, dicB, dicS):
+        self.dicB = dicB
+        self.dicS = dicS
 
+    def NewCounts(self, counts=10):
+        needsCurveFitting = False
+        dicB = self.dicB
+        dicS = self.dicS
+        FreqN = freqBuckets(dicB)
+        t_counts = totalTokens(dicB) #tokens
 
-    # getting the number of unseen bigrams i.e. N_0
-    t_bigrams, seen_bigrams = possible_avail(dicS)
-    unseen_bigrams = t_bigrams - seen_bigrams
-    FreqN[0] = unseen_bigrams
+        # getting the number of unseen bigrams i.e. N_0
+        t_bigrams, seen_bigrams = possible_avail(dicS)
+        unseen_bigrams = t_bigrams - seen_bigrams
+        FreqN[0] = unseen_bigrams
 
-    # calculate the new counts for top 10
-    newCountsTop10 = {}
-    for n in range(10):
-        newCountsTop10[n] = (FreqN[n+1]*(n+1)/float(FreqN[n]))
-    return newCountsTop10
+        # calculate the new counts for top 10
+        newCounts = {}
+        for i in range(counts):
+            try:
+                newCounts[i] = (FreqN[i+1]*(i+1)/float(FreqN[i]))
+            except ZeroDivisionError:
+                needsCurveFitting = True
+                continue # leave blank.
+
+        # do curve fitting
+        
+        # till now we had 
+        return newCounts
 
 
 '''
@@ -265,28 +290,3 @@ def freqBuckets(dic):
             FreqN[freq] = 1
     FreqN[0]=0
     return FreqN
-
-
-'''
-Total number of bigrams
-'''
-def totalCounts(dic):
-    t_counts = 0
-    for key in dic.keys():
-        t_counts += dic[key]
-    return t_counts
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -219,17 +219,12 @@ computes the probability of a sentence in
 log space.
 '''
 def PrLog(sentence, mle):
-    n_value = len(list(mle.keys())[0].split(' '))
-    words = ("<s> "+sentence+" </s>").split(" ")
+    temp = sentence.split()
     pr_log = 0
-    for i in range(n_value - 1,len(words)):
-        word = words[i]
-        for j in range(i-1,i-(n_value),-1):
-           word = words[j]+" "+word
-        # multiplying the probabilities
+    for i in range(1, len(temp)):
         try:
-           pr_log += math.log(mle[word])
-        except KeyError:
+            pr_log += np.log(mle[(temp[i]+' '+temp[i-1])])
+        except: # KeyError or LogError
             #then the probability doesn't exist => 0
             return -1e-10 # log(0) is -inf
     return (pr_log)

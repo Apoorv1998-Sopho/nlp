@@ -1,3 +1,9 @@
+'''
+Author - Apoorv Agnihotri
+Roll No. - 16110020
+Collaborator - Abhavya Chandra
+'''
+
 import nltk
 import random
 import operator as op
@@ -282,7 +288,6 @@ class GoodTuring(object):
         total_bigrams = totalTokens(self.FreqN) 
         if bigram not in self.dicB.keys():
             return (self.FreqN[0]/total_bigrams)
-        
         return self.dicB[bigram]/self.dicS[bigram.split()[0]]
 
 
@@ -312,7 +317,9 @@ class GoodTuring(object):
         # estimate uncalculated
         def func(x, a, k): # f(x) = a*exp(-kx) == Nc
             return a*(np.exp(-k*x))
-        popt = curve_fit(func, list(self.FreqN.keys()), list(self.FreqN.values()))
+        popt = curve_fit(func, \
+            list(self.FreqN.keys()),\
+            list(self.FreqN.values()))
         for i in unCalculated:
             print (i)
             self.newCounts[i] = self.FreqN[i+1]*(i+1)\
@@ -341,8 +348,8 @@ def perPlexity(sentences, mle, model):
         prob_sent = 0
         bigrams = nGramCount([sent], 2)
         for bigram in bigrams:
-            new = model.Prob(bigram, mle)
-            prob_sent = prob_sent + math.log(new)
+            new_pr = model.Prob(bigram)
+            prob_sent = prob_sent + math.log(new_pr)
             
         perp = perp+prob_sent
         perp *= -1/len(sentences)

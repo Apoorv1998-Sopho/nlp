@@ -278,14 +278,6 @@ class GoodTuring(object):
         self.FreqN = {}
         self.newCounts = {}
 
-    def Prob(self, bigram):
-        total_bigrams = totalTokens(self.FreqN) 
-        if bigram not in self.dicB.keys():
-            return (self.FreqN[1]/total_bigrams)
-        
-        return self.dicB[bigram]/self.dicS[bigram.split()[1]]
-
-
     def NewCounts(self, counts=10):
         dicB = self.dicB
         dicS = self.dicS
@@ -296,7 +288,6 @@ class GoodTuring(object):
         t_bigrams, seen_bigrams = possible_avail(dicS)
         unseen_bigrams = t_bigrams - seen_bigrams
         self.FreqN[0] = unseen_bigrams
-        unCalculated = []
 
         # calculate the new FreqBuckets
         for i in range(counts):
@@ -304,19 +295,7 @@ class GoodTuring(object):
                 self.newCounts[i] = self.FreqN[i+1]*\
                 (i+1)/float(self.FreqN[i])
             except ZeroDivisionError:
-                unCalculated.append(i)
                 continue # leave blank.
-
-                # estimate the remaining
-
-        # estimate uncalculated
-        def func(x, a, k): # f(x) = a*exp(-kx) == Nc
-            return a*(math.exp(-k*x))
-        popt = curve_fit(func, list(self.FreqN.keys()), list(self.FreqN.values()))
-        for i in unCalculated:
-            print (i)
-            self.newCounts[i] = self.FreqN[i+1]*(i+1)\
-            /func(i, popt[0], popt[1])
 
         return self.newCounts
 
@@ -334,19 +313,3 @@ def freqBuckets(dic):
             FreqN[freq] = 1
     FreqN[0]=0
     return FreqN
-
-
-def perPlexity(sentences, mle, model):
-    perp = 0
-    for sent in sentences: # all sentences
-        prob_sent = 0
-        bigrams = nGramCount([sentence], 2)
-        for bigram in bigrams:
-            new = model.Prob(bigram.split(" ")[1],\
-                bigram.split(" ")[0], mle)
-            prob_sent = prob_sent + math.log(new)
-            
-        perp = perp+prob_sent
-        perp *= -1/len(sentences)
-       
-    return math.exp(perp)

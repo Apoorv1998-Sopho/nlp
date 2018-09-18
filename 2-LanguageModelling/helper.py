@@ -166,8 +166,6 @@ def Generator(mle, length_req):
 
     # iterating untill we sample an nGram with </s>
     while(tries_left >= 0):
-        if len(sentence) > 15: # dont want big sentences
-            break
         nW = nextWord(mle, lastWord)
         # print ("nw, lw:", nW, '|', lastWord)
 
@@ -225,9 +223,10 @@ def PrLog(sentence, mle):
     pr_log = 0
     for i in range(1, len(temp)):
         try:
-            pr_log += np.log(mle[(temp[i-1]+' '+temp[i])])
+            pr_log += np.log(mle[(temp[i]+' '+temp[i-1])])
         except: # KeyError or LogError
-            pass
+            #then the probability doesn't exist => 0
+            return -1e-10 # log(0) is -inf
     return (pr_log)
 #################################################### 4b
 
@@ -281,23 +280,36 @@ class GoodTuring(object):
     def NewCounts(self, counts=10):
         dicB = self.dicB
         dicS = self.dicS
-        self.FreqN = freqBuckets(dicB)
+        FreqN = freqBuckets(dicB)
         t_counts = totalTokens(dicB) #tokens
 
         # getting the number of unseen bigrams i.e. N_0
         t_bigrams, seen_bigrams = possible_avail(dicS)
         unseen_bigrams = t_bigrams - seen_bigrams
         self.FreqN[0] = unseen_bigrams
+        FreqN[0] = unseen_bigrams
+        unCalculated = []
 
-        # calculate the new FreqBuckets
+        # calculate the new counts for top 10
+        newCounts = {}
         for i in range(counts):
             try:
-                self.newCounts[i] = self.FreqN[i+1]*\
-                (i+1)/float(self.FreqN[i])
+                newCounts[i] = FreqN[i+1]*(i+1)/float(FreqN[i])
             except ZeroDivisionError:
                 continue # leave blank.
 
         return self.newCounts
+        # estimate the remaining
+        d = sum(y[1:])/len(sum(y[1:]))
+        if (needsCurveFitting):
+            def func(x, a, k): # f(x) = a*exp(-kx) == Nc
+                return a*(math.exp(-k*x))
+            popt = curve_fit(func, list(FreqN.keys()), \
+                             list(FreqN.values()))
+            for i in unCalculated:
+                print (i)
+                newCounts[i] = FreqN[i+1]*(i+1)/func(i, popt[0], popt[1])
+        return newCounts
 
 '''
 Getting freq buckets.

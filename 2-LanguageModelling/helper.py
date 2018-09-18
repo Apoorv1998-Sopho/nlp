@@ -1,6 +1,7 @@
 import nltk
 import random
 import operator as op
+import math
 import re
 from functools import reduce
 import numpy as np
@@ -10,6 +11,7 @@ nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
 from scipy.stats import rv_discrete
+from scipy.optimize import curve_fit
 
 # get tokenized sentences present in "filename"
 def getSents(filename):
@@ -137,15 +139,16 @@ Generates a sentence with the given MLE
          of the nGrams
 @param: n which nGram would we like our generator to use
 '''
-def Generator(mle):
+def Generator(mle, length_req):
     sentence = []
+    tries_allowed = 10
+    tries_left = tries_allowed
 
     # we want fist nGram sampled to have '<s>'
     while True:
         firstNGram = nextWord(mle)
-        if '<s>' in firstNGram: 
+        if ('<s>' in firstNGram) and ('</s>' not in firstNGram): 
             break
-
         else:
             pass
 
@@ -153,28 +156,41 @@ def Generator(mle):
     sentence = firstNGram.split()
     lastWord = ' '.join(sentence[1:])
 
+    #if the length of nW 1, lastword = none
+    if len(sentence) == 1:
+        lastWord = ''
+
     # finding which ngram we are working with
     n = len(firstNGram.split())
+    # print ("nw, lw:", sentence, '|', lastWord)
 
     # iterating untill we sample an nGram with </s>
-    while(True):
+    while(tries_left >= 0):
         nW = nextWord(mle, lastWord)
-        if '<s>' not in nW:
-            sentence.append(nW.split()[-1])
-            lastWord = ' '.join(\
-                       sentence[(len(sentence)-n):])
+        # print ("nw, lw:", nW, '|', lastWord)
 
-        if '</s>' in nW:
-            if sentence[-1] != '</s>':
-                sentence.append(nW.split()[-1])
-            return ' '.join(sentence)   
+        if '<s>' in nW:
+            pass # ignore
+
+        elif '</s>' in nW:
+            tries_left -= 1
+            # cheking if sentence long enough to be returned
+            if len(sentence)-1 >= length_req:
+                return ' '.join(sentence[1:])
+
+        else: #'</s>' not present
+            sentence.append(nW.split()[-1])
+            tries_left = tries_allowed
+            lastWord = ' '.join(nW.split()[1:])
+    return ' '.join(sentence[1:])
 
 
 '''
 Samples the next Ngram provided the lastngram used.
 '''
-def nextWord(mle, lastWord=None):
-    if lastWord == None:
+def nextWord(mle, lastWord=''):
+    if lastWord == '':
+        # all possiblities
         keys = list(mle.keys())
     
     else:
@@ -198,10 +214,25 @@ def nextWord(mle, lastWord=None):
     return word[0]
 
 #################################################### 4b
-
-
-
-
+'''
+computes the probability of a sentence in
+log space.
+'''
+def PrLog(sentence, mle):
+    n_value = len(list(mle.keys())[0].split(' '))
+    words = ("<s> "+sentence+" </s>").split(" ")
+    pr_log = 0
+    for i in range(n_value - 1,len(words)):
+        word = words[i]
+        for j in range(i-1,i-(n_value),-1):
+           word = words[j]+" "+word
+        # multiplying the probabilities
+        try:
+           pr_log += math.log(mle[word])
+        except KeyError:
+            #then the probability doesn't exist => 0
+            return -1e-10 # log(0) is -inf
+    return (pr_log)
 #################################################### 4b
 
 
@@ -250,7 +281,6 @@ class GoodTuring(object):
         self.dicS = dicS
 
     def NewCounts(self, counts=10):
-        needsCurveFitting = False
         dicB = self.dicB
         dicS = self.dicS
         FreqN = freqBuckets(dicB)
@@ -260,21 +290,28 @@ class GoodTuring(object):
         t_bigrams, seen_bigrams = possible_avail(dicS)
         unseen_bigrams = t_bigrams - seen_bigrams
         FreqN[0] = unseen_bigrams
+        unCalculated = []
 
         # calculate the new counts for top 10
         newCounts = {}
         for i in range(counts):
             try:
-                newCounts[i] = (FreqN[i+1]*(i+1)/float(FreqN[i]))
+                newCounts[i] = FreqN[i+1]*(i+1)/float(FreqN[i])
             except ZeroDivisionError:
-                needsCurveFitting = True
+                unCalculated.append(i)
                 continue # leave blank.
 
-        # do curve fitting
-        
-        # till now we had 
+        # estimate the remaining
+        d = sum(y[1:])/len(sum(y[1:]))
+        if (needsCurveFitting):
+            def func(x, a, k): # f(x) = a*exp(-kx) == Nc
+                return a*(math.exp(-k*x))
+            popt = curve_fit(func, list(FreqN.keys()), \
+                             list(FreqN.values()))
+            for i in unCalculated:
+                print (i)
+                newCounts[i] = FreqN[i+1]*(i+1)/func(i, popt[0], popt[1])
         return newCounts
-
 
 '''
 Getting freq buckets.

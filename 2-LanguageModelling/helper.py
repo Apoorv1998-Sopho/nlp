@@ -166,6 +166,8 @@ def Generator(mle, length_req):
 
     # iterating untill we sample an nGram with </s>
     while(tries_left >= 0):
+        if len(sentence) > 15: # dont want big sentences
+            break
         nW = nextWord(mle, lastWord)
         # print ("nw, lw:", nW, '|', lastWord)
 
@@ -223,10 +225,9 @@ def PrLog(sentence, mle):
     pr_log = 0
     for i in range(1, len(temp)):
         try:
-            pr_log += np.log(mle[(temp[i]+' '+temp[i-1])])
+            pr_log += np.log(mle[(temp[i-1]+' '+temp[i])])
         except: # KeyError or LogError
-            #then the probability doesn't exist => 0
-            return -1e-10 # log(0) is -inf
+            pass
     return (pr_log)
 #################################################### 4b
 
@@ -277,39 +278,47 @@ class GoodTuring(object):
         self.FreqN = {}
         self.newCounts = {}
 
+    def Prob(self, bigram):
+        total_bigrams = totalTokens(self.FreqN) 
+        if bigram not in self.dicB.keys():
+            return (self.FreqN[0]/total_bigrams)
+        
+        return self.dicB[bigram]/self.dicS[bigram.split()[0]]
+
+
     def NewCounts(self, counts=10):
         dicB = self.dicB
         dicS = self.dicS
-        FreqN = freqBuckets(dicB)
+        self.FreqN = freqBuckets(dicB)
         t_counts = totalTokens(dicB) #tokens
 
         # getting the number of unseen bigrams i.e. N_0
         t_bigrams, seen_bigrams = possible_avail(dicS)
         unseen_bigrams = t_bigrams - seen_bigrams
         self.FreqN[0] = unseen_bigrams
-        FreqN[0] = unseen_bigrams
         unCalculated = []
 
-        # calculate the new counts for top 10
-        newCounts = {}
+        # calculate the new FreqBuckets
         for i in range(counts):
             try:
-                newCounts[i] = FreqN[i+1]*(i+1)/float(FreqN[i])
+                self.newCounts[i] = self.FreqN[i+1]*\
+                (i+1)/float(self.FreqN[i])
             except ZeroDivisionError:
+                unCalculated.append(i)
                 continue # leave blank.
 
+                # estimate the remaining
+
+        # estimate uncalculated
+        def func(x, a, k): # f(x) = a*exp(-kx) == Nc
+            return a*(np.exp(-k*x))
+        popt = curve_fit(func, list(self.FreqN.keys()), list(self.FreqN.values()))
+        for i in unCalculated:
+            print (i)
+            self.newCounts[i] = self.FreqN[i+1]*(i+1)\
+            /func(i, popt[0], popt[1])
+
         return self.newCounts
-        # estimate the remaining
-        d = sum(y[1:])/len(sum(y[1:]))
-        if (needsCurveFitting):
-            def func(x, a, k): # f(x) = a*exp(-kx) == Nc
-                return a*(math.exp(-k*x))
-            popt = curve_fit(func, list(FreqN.keys()), \
-                             list(FreqN.values()))
-            for i in unCalculated:
-                print (i)
-                newCounts[i] = FreqN[i+1]*(i+1)/func(i, popt[0], popt[1])
-        return newCounts
 
 '''
 Getting freq buckets.
@@ -325,3 +334,17 @@ def freqBuckets(dic):
             FreqN[freq] = 1
     FreqN[0]=0
     return FreqN
+
+def perPlexity(sentences, mle, model):
+    perp = 0
+    for sent in sentences: # all sentences
+        prob_sent = 0
+        bigrams = nGramCount([sent], 2)
+        for bigram in bigrams:
+            new = model.Prob(bigram, mle)
+            prob_sent = prob_sent + math.log(new)
+            
+        perp = perp+prob_sent
+        perp *= -1/len(sentences)
+       
+    return math.exp(perp)

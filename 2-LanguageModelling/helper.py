@@ -305,14 +305,12 @@ class GoodTuring(object):
 
         # calculate the new FreqBuckets
         for i in range(counts):
-            try:
-                self.newCounts[i] = self.FreqN[i+1]*\
-                (i+1)/float(self.FreqN[i])
-            except ZeroDivisionError:
+            if self.FreqN[i+1] != 0:
+                self.newCounts[i]=self.FreqN[i+1]*\
+                                  (i+1)/float(self.FreqN[i])
+            else:
                 unCalculated.append(i)
                 continue # leave blank.
-
-                # estimate the remaining
 
         # estimate uncalculated
         def func(x, a, k): # f(x) = a*exp(-kx) == Nc
@@ -321,10 +319,8 @@ class GoodTuring(object):
             list(self.FreqN.keys()),\
             list(self.FreqN.values()))
         for i in unCalculated:
-            print (i)
-            self.newCounts[i] = self.FreqN[i+1]*(i+1)\
-            /func(i, popt[0], popt[1])
-
+            self.newCounts[i]=(i+1)*func(i+1, popt[0], popt[1])\
+                              /self.FreqN[i]
         return self.newCounts
 
 '''

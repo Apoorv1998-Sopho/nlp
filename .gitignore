@@ -1,2 +1,4 @@
 *.ipynb_checkpoints
 *_pycache_
+3-tf_idfDemo/__pycache__/tfidf.cpython-36.pyc
+3-tf_idfDemo/src/__pycache__/tfidf.cpython-36.pyc
